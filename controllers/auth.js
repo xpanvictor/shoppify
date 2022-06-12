@@ -3,24 +3,20 @@ const { BadRequest, NotFound, Forbidden, Unauthorized } = require('../errors')
 const User = require('../models/User')
 const bcryt = require('bcrypt')
 const { StatusCodes } = require('http-status-codes')
+const { registrationSchema, loginSchema } = require('../helpers/validation_schema')
 
 const REFRESH_EXPIRATION = 24 * 60 * 60 * 1000
+const ACCESS_EXPIRATION = 15 * 60 * 1000
 
 const handleRegistration = async (req, res) => {
-    //use joi to get the data
-    const { email, username, password } = req.body
 
-    if ( !email || !username || !password ) throw new BadRequest('Body must include email, username and password')
-
-    const user = await User.findOne({ email, username })
-
-    if (user) throw new BadRequestError('User already exists')
-
-    const hashedPassword = await bcryt.hash(password, 10)
+    const validationResult = await registrationSchema.validateAsync(req.body)
+    
+    const hashedPassword = await bcryt.hash(validationResult.password, 10)
     
     const result = await User.create({
-        email,
-        username,
+        email: validationResult.email,
+        username: validationResult.username,
         password: hashedPassword
     })
 
@@ -29,17 +25,15 @@ const handleRegistration = async (req, res) => {
 
 
 const handleLogin = async (req, res) => {
-    //use joi to validate the data
-    const { email, password } = req.body
+ 
+    const validationResult = await loginSchema.validateAsync(req.body)
     const cookie = req.cookies
 
-    if ( !email || !password ) throw new BadRequest('Body must include email and password')
-
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email: validationResult.email })
 
     if (!user) throw new NotFound('No user found with this email')
 
-    const match = await bcryt.compare(password, user.password)
+    const match = await bcryt.compare(validationResult.password, user.password)
 
     if (match) {
         const roles = Object.values(user.roles)
@@ -79,8 +73,10 @@ const handleLogin = async (req, res) => {
         const result = await user.save()
 
         res.cookie('jwt', newRefreshToken, { httpOnly: true, maxAge: REFRESH_EXPIRATION, sameSite: 'None'}) //secure: true
-        return res.status(StatusCodes.OK).json({ accessToken, expires: REFRESH_EXPIRATION })
+        return res.status(StatusCodes.OK).json({ accessToken, expires: ACCESS_EXPIRATION })
     }
+
+    return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Details do not match' })
 }
 
 
@@ -145,7 +141,7 @@ const handleRefreshToken = async (req, res) => {
             const result = await foundUser.save()
 
             res.cookie('jwt', newRefreshToken, { httpOnly: true, maxAge: REFRESH_EXPIRATION, sameSite: 'None'}) //secure: true
-            return res.status(StatusCodes.OK).json({ accessToken, expires: REFRESH_EXPIRATION })
+            return res.status(StatusCodes.OK).json({ accessToken, expires: ACCESS_EXPIRATION })
         }
     )
 

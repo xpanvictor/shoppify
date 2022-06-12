@@ -6,6 +6,11 @@ const app = express()
 const cookieParser = require('cookie-parser')
 const mongoose = require('mongoose')
 const connectDB = require('./config/dbConnection')
+const morgan = require('morgan')
+
+const errorHandler = require('./middlewares/error-handler')
+const routeNotFound = require('./middlewares/route-not-found')
+const authRouter = require('./routes/auth')
 
 //connect to db
 connectDB(process.env.DATABASE_URI)
@@ -13,7 +18,15 @@ connectDB(process.env.DATABASE_URI)
 
 app.use(express.json())
 app.use(cookieParser())
+app.use(morgan('dev'))
 
+app.get('/api/v1/', (req, res) => {
+    return res.status(200).send('Home page')
+})
+app.use('/api/v1/auth', authRouter)
+
+app.use(routeNotFound)
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3000
 
