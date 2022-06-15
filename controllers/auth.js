@@ -20,7 +20,9 @@ const handleRegistration = async (req, res) => {
         password: hashedPassword
     })
 
-    return res.status(StatusCodes.CREATED).json({ data: 'User created' })
+    const { password, refreshToken, roles, ...others } = result._doc
+
+    return res.status(StatusCodes.CREATED).json({ message: 'User created', data: others })
 }
 
 
@@ -40,6 +42,7 @@ const handleLogin = async (req, res) => {
         
         const accessToken = jwt.sign(
             { UserInfo: {
+                id: user.id,
                 email: user.email,
                 roles
             }
@@ -123,6 +126,7 @@ const handleRefreshToken = async (req, res) => {
         
             const accessToken = jwt.sign(
                 { UserInfo: {
+                    id: foundUser.id,
                     email: foundUser.email,
                     roles
                     }

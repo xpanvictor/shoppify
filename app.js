@@ -11,6 +11,9 @@ const morgan = require('morgan')
 const errorHandler = require('./middlewares/error-handler')
 const routeNotFound = require('./middlewares/route-not-found')
 const authRouter = require('./routes/auth')
+const userRouter = require('./routes/user')
+const productRouter = require('./routes/product')
+const verifyJWT = require('./middlewares/verifyJWT')
 
 //connect to db
 connectDB(process.env.DATABASE_URI)
@@ -24,6 +27,11 @@ app.get('/api/v1/', (req, res) => {
     return res.status(200).send('Home page')
 })
 app.use('/api/v1/auth', authRouter)
+
+
+app.use(verifyJWT)
+app.use('/api/v1/users', userRouter)
+app.use('/api/v1/products', productRouter)
 
 app.use(routeNotFound)
 app.use(errorHandler)
