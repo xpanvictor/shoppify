@@ -9,7 +9,7 @@ router.route('/stats').get(getUsersStats)
 
 
 router.route("/:id")
-    .put(verifyRoles(ROLES_LIST.User, ROLES_LIST.Admin), updateUser)
+    .patch(verifyRoles(ROLES_LIST.User, ROLES_LIST.Admin), updateUser)
     .delete(verifyRoles(ROLES_LIST.Admin), deleteUser)
     .get(verifyRoles(ROLES_LIST.Admin), getUser)
 

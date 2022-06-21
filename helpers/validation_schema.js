@@ -33,9 +33,31 @@ const productSchema = Joi.object({
 })
 
 
+const updateProductSchema = Joi.object({
+    title: Joi.string(),
+    description: Joi.string(),
+    image: Joi.string(),
+    categories: Joi.array(),
+    color: Joi.string(),
+    size: Joi.string(),
+    price: Joi.number()
+})
+
+
+const orderSchema = Joi.object({
+    userId: Joi.string(),
+    products: Joi.array().required(),
+    amount: Joi.number().required(),
+    address: Joi.object(),
+    status: Joi.string()
+})
+
+
 module.exports = {
     registrationSchema,
     loginSchema,
     updateUserSchema,
-    productSchema
+    productSchema,
+    updateProductSchema,
+    orderSchema
 }
